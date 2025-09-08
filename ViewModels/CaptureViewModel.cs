@@ -34,6 +34,8 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
     private bool _isFrozen;
     public bool IsFrozen { get => _isFrozen; set => this.RaiseAndSetIfChanged(ref _isFrozen, value); }
     public ReactiveCommand<Unit, Unit> StopCmd { get; }
+    
+    public ReactiveCommand<Unit, Unit> RestartCmd { get; }
 
     public CaptureViewModel(IPreviewService previewService, string mode, Action? onExit = null)
     {
@@ -48,6 +50,7 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
         _ = RunCountdownAndFreezeAsync(_cts.Token);
         
         StopCmd = ReactiveCommand.Create(StopAndExit);
+        RestartCmd = ReactiveCommand.Create(Restart);
     }
 
     private void OnFrameReady(Bitmap? bitmap)
@@ -87,6 +90,16 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
         _cts.Cancel();
         _previewService.Stop();
         _onExit?.Invoke();
+    }
+
+    private void Restart()
+    {
+        RemainingSeconds = 5;
+        IsFrozen = false;
+        IsCounting = true;
+        _previewService.Start();
+        _ = RunCountdownAndFreezeAsync(_cts.Token);
+        
     }
     
     public void Dispose()
