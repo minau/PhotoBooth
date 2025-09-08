@@ -1,0 +1,9 @@
+<!-- Views/MainWindow.axaml -->
+<Window xmlns="https://github.com/avaloniaui"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:vm="clr-namespace:Photobooth.ViewModels"
+        x:Class="Photobooth.Views.MainWindow"
+        x:DataType="vm:MainWindowViewModel"
+        Width="960" Height="640" Title="Photobooth">
+    <ContentControl Content="{Binding CurrentView}" />
+</Window>

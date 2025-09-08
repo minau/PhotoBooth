@@ -1,0 +1,15 @@
+<!-- App.axaml -->
+<Application xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:Photobooth.Views"
+             xmlns:vm="clr-namespace:Photobooth.ViewModels"
+             x:Class="Photobooth.App">
+    <Application.DataTemplates>
+        <DataTemplate DataType="{x:Type vm:MainViewModel}">
+            <views:MainView/>
+        </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:CaptureViewModel}">
+            <views:CaptureView/>
+        </DataTemplate>
+    </Application.DataTemplates>
+</Application>
