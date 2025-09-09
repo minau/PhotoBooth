@@ -11,5 +11,8 @@
         <DataTemplate DataType="{x:Type vm:CaptureViewModel}">
             <views:CaptureView/>
         </DataTemplate>
+        <DataTemplate DataType="{x:Type vm:PhotostripViewModel}">
+            <views:PhotostripView />
+        </DataTemplate>
     </Application.DataTemplates>
 </Application>

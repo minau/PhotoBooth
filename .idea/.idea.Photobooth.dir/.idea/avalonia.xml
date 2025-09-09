@@ -7,6 +7,8 @@
         <entry key="Views/CaptureView.axaml" value="Photobooth.csproj" />
         <entry key="Views/MainView.axaml" value="Photobooth.csproj" />
         <entry key="Views/MainWindow.axaml" value="Photobooth.csproj" />
+        <entry key="Views/PhotostripCaptureView.axaml" value="Photobooth.csproj" />
+        <entry key="Views/PhotostripView.axaml" value="Photobooth.csproj" />
       </map>
     </option>
   </component>

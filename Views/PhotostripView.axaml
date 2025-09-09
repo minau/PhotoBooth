@@ -1,0 +1,48 @@
+<UserControl xmlns="https://github.com/avaloniaui"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vm="clr-namespace:Photobooth.ViewModels"
+             x:Class="Photobooth.Views.PhotostripView"
+             x:DataType="vm:PhotostripViewModel">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="160"/>   <!-- barre vignettes -->
+            <ColumnDefinition Width="*"/>     <!-- preview -->
+        </Grid.ColumnDefinitions>
+
+        <!-- Colonne vignettes -->
+        <Border Grid.Column="0" Background="#111" Padding="8">
+            <StackPanel>
+            <Image Source="{Binding PhotostripFrame1}" Width="200" Height="150" Stretch="Uniform"
+                   HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            <Image Source="{Binding PhotostripFrame2}" Width="200" Height="150" Stretch="Uniform"
+                   HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            <Image Source="{Binding PhotostripFrame3}" Width="200" Height="150" Stretch="Uniform"
+                   HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            <Image Source="{Binding PhotostripFrame4}" Width="200" Height="150" Stretch="Uniform"
+                   HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Zone preview + overlays -->
+        <Grid Grid.Column="1" Margin="8">
+            <Image Source="{Binding Frame}" Stretch="Uniform" />
+            <!-- Overlay compte à rebours -->
+            <Border Background="#66000000" CornerRadius="8"
+                    HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Padding="16" IsVisible="{Binding IsCounting}">
+                <TextBlock Text="{Binding RemainingSeconds}"
+                           FontSize="72" FontWeight="Bold" Foreground="White"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Border>
+
+            <!-- Barre info / actions en bas -->
+            <DockPanel VerticalAlignment="Bottom" LastChildFill="False" Margin="0,0,0,8">
+                <Border Background="#99000000" CornerRadius="6" Padding="6,2" DockPanel.Dock="Left">
+                    <TextBlock Text="{Binding Step, StringFormat='Photo {0}/4'}" Foreground="White" />
+                </Border>
+                <Button Content="Stop et Retour" Command="{Binding CancelCmd}"
+                        HorizontalAlignment="Right" Margin="8,0,0,0"/>
+            </DockPanel>
+        </Grid>
+    </Grid>
+</UserControl>
