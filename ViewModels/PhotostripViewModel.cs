@@ -224,7 +224,7 @@ public sealed class PhotostripViewModel : ReactiveObject, IDisposable
             1200,
             900,
             12,
-            24,
+            12,
             background: new Bgra32(255, 255, 255, 255),
             jpegQuality: 92,
             outputPath: outfile);
