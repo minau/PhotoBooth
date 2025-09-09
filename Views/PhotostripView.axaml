@@ -5,21 +5,21 @@
              x:DataType="vm:PhotostripViewModel">
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="160"/>   <!-- barre vignettes -->
+            <ColumnDefinition Width="200"/>   <!-- barre vignettes -->
             <ColumnDefinition Width="*"/>     <!-- preview -->
         </Grid.ColumnDefinitions>
 
         <!-- Colonne vignettes -->
         <Border Grid.Column="0" Background="#111" Padding="8">
             <StackPanel>
-            <Image Source="{Binding PhotostripFrame1}" Width="200" Height="150" Stretch="Uniform"
-                   HorizontalAlignment="Right" VerticalAlignment="Top"/>
-            <Image Source="{Binding PhotostripFrame2}" Width="200" Height="150" Stretch="Uniform"
-                   HorizontalAlignment="Right" VerticalAlignment="Top"/>
-            <Image Source="{Binding PhotostripFrame3}" Width="200" Height="150" Stretch="Uniform"
-                   HorizontalAlignment="Right" VerticalAlignment="Top"/>
-            <Image Source="{Binding PhotostripFrame4}" Width="200" Height="150" Stretch="Uniform"
-                   HorizontalAlignment="Right" VerticalAlignment="Top"/>
+            <Image Source="{Binding PhotostripFrame1}" Width="190" Height="150" Stretch="Uniform"
+                   HorizontalAlignment="Center" VerticalAlignment="Top"/>
+            <Image Source="{Binding PhotostripFrame2}" Width="190" Height="150" Stretch="Uniform"
+                   HorizontalAlignment="Center" VerticalAlignment="Top"/>
+            <Image Source="{Binding PhotostripFrame3}" Width="190" Height="150" Stretch="Uniform"
+                   HorizontalAlignment="Center" VerticalAlignment="Top"/>
+            <Image Source="{Binding PhotostripFrame4}" Width="190" Height="150" Stretch="Uniform"
+                   HorizontalAlignment="Center" VerticalAlignment="Top"/>
             </StackPanel>
         </Border>
 
@@ -40,7 +40,11 @@
                 <Border Background="#99000000" CornerRadius="6" Padding="6,2" DockPanel.Dock="Left">
                     <TextBlock Text="{Binding Step, StringFormat='Photo {0}/4'}" Foreground="White" />
                 </Border>
-                <Button Content="Stop et Retour" Command="{Binding CancelCmd}"
+                <Button Content="Annuler" Command="{Binding CancelCmd}"
+                        HorizontalAlignment="Right" Margin="8,0,0,0"/>
+                <Button Content="Recommencer" Command="{Binding RestartCmd}"
+                        HorizontalAlignment="Right" Margin="8,0,0,0"/>
+                <Button Content="Imprimer" Command="{Binding PrintCmd}"
                         HorizontalAlignment="Right" Margin="8,0,0,0"/>
             </DockPanel>
         </Grid>

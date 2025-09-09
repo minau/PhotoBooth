@@ -2,16 +2,15 @@ using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
-using System.Linq;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
-using Avalonia.Controls.Mixins;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
 using Avalonia.Threading;
 using Photobooth.Services;
+using Photobooth.Utils;
 using ReactiveUI;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace Photobooth.ViewModels;
 
@@ -67,6 +66,8 @@ public sealed class PhotostripViewModel : ReactiveObject, IDisposable
     public bool IsFrozen { get => _isFrozen; set => this.RaiseAndSetIfChanged(ref _isFrozen, value); }
     
     public ReactiveCommand<Unit, Unit> CancelCmd { get; }
+    public ReactiveCommand<Unit, Unit> RestartCmd { get; }
+    public ReactiveCommand<Unit, Unit> PrintCmd { get; }
 
     public PhotostripViewModel(IPreviewService previewService, Action onExit)
     {
@@ -74,6 +75,7 @@ public sealed class PhotostripViewModel : ReactiveObject, IDisposable
         _onExit = onExit;
 
         _previewService.FrameReady += OnFrame;
+        /*
         var uri = new Uri("avares://Photobooth/Assets/strip.jpg");
         using var stream = AssetLoader.Open(uri);
         var bmp = new Bitmap(stream);   // <- OK
@@ -82,11 +84,14 @@ public sealed class PhotostripViewModel : ReactiveObject, IDisposable
         Dispatcher.UIThread.Post(() => PhotostripFrame2 = bmp);
         Dispatcher.UIThread.Post(() => PhotostripFrame3 = bmp);
         Dispatcher.UIThread.Post(() => PhotostripFrame4 = bmp);
+        */
         
         // lance la séquence automatiquement
         _ = RunSequenceAsync(_cts.Token);
 
         CancelCmd = ReactiveCommand.Create(CancelAndExit);
+        RestartCmd = ReactiveCommand.Create(RestartSequence);
+        PrintCmd = ReactiveCommand.Create(Print);
     }
 
     private void OnFrame(Bitmap? bmp)
@@ -193,6 +198,39 @@ public sealed class PhotostripViewModel : ReactiveObject, IDisposable
         _cts.Cancel();
         _previewService.Stop();
         _onExit?.Invoke();
+    }
+
+    private void RestartSequence()
+    {
+        PhotostripFrame1 = null;
+        PhotostripFrame2 = null;
+        PhotostripFrame3 = null;
+        PhotostripFrame4 = null;
+        _ = RunSequenceAsync(_cts.Token);
+    }
+
+    private void Print()
+    {
+        // Choisis un dossier de sortie
+        var outDir = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
+             "Photomaton");
+        Directory.CreateDirectory(outDir);
+
+        var outfile = Path.Combine(outDir, $"photostrip_{DateTime.Now:yyyyMMdd_HHmmss}.jpg");
+        
+        var frames = new List<Bitmap>() {PhotostripFrame1, PhotostripFrame2, PhotostripFrame3, PhotostripFrame4};
+        BitmapStitcher.MakeGrid2x2(frames, 
+            1200,
+            900,
+            12,
+            24,
+            background: new Bgra32(255, 255, 255, 255),
+            jpegQuality: 92,
+            outputPath: outfile);
+        
+        Console.WriteLine($"Photostrip sauvé : {outfile}");
+        CancelAndExit();
     }
 
     public void Dispose()
