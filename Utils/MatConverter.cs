@@ -101,6 +101,31 @@ public static class MatConverter
 
         return wb;
     }
+
+    public static Mat CropToFourFive(Mat frame)
+    {
+        var targetRatio = 4.0 / 5.0;
+        var currentRatio = frame.Width / (double) frame.Height;
+        
+        int newWidth = frame.Width;
+        int newHeight = frame.Height;
+
+        if (currentRatio > targetRatio)
+        {
+            // trop large → on coupe sur les côtés
+            newWidth = (int)(frame.Height * targetRatio);
+        }
+        else
+        {
+            // trop haut → on coupe en haut/bas
+            newHeight = (int)(frame.Width / targetRatio);
+        }
+
+        int x = (frame.Width - newWidth) / 2;
+        int y = (frame.Height - newHeight) / 2;
+
+        return new Mat(frame, new OpenCvSharp.Rect(x, y, newWidth, newHeight));
+    }
     
     public static void SaveAsJpeg(this WriteableBitmap wb, string path, int quality = 90)
     {

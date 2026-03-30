@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.Reactive;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
 using Photobooth.Services;
+using Photobooth.Utils;
 using ReactiveUI;
 
 namespace Photobooth.ViewModels;
@@ -34,8 +36,8 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
     private bool _isFrozen;
     public bool IsFrozen { get => _isFrozen; set => this.RaiseAndSetIfChanged(ref _isFrozen, value); }
     public ReactiveCommand<Unit, Unit> StopCmd { get; }
-    
     public ReactiveCommand<Unit, Unit> RestartCmd { get; }
+    public ReactiveCommand<Unit, Unit> PrintCmd { get; }
 
     public CaptureViewModel(IPreviewService previewService, string mode, Action? onExit = null)
     {
@@ -51,6 +53,7 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
         
         StopCmd = ReactiveCommand.Create(StopAndExit);
         RestartCmd = ReactiveCommand.Create(Restart);
+        PrintCmd = ReactiveCommand.Create(Print);
     }
 
     private void OnFrameReady(Bitmap? bitmap)
@@ -100,6 +103,24 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
         _previewService.Start();
         _ = RunCountdownAndFreezeAsync(_cts.Token);
         
+    }
+    
+    private void Print()
+    {
+        var frames = new List<Bitmap>() { Frame };
+        
+        // coordonnées à adapter à ton template réel
+        
+
+        string output = TemplateRenderer.BuildFromTemplate(
+            templatePath: "avares://Photobooth/Assets/template_simple.png",
+            photos: frames,
+            slots: TemplateRenderer.PhotoClassicSlots,
+            outputFileName: $"photo_{DateTime.Now:yyyyMMdd_HHmmss}.jpg"
+        );
+        
+        Console.WriteLine($"Photo sauvé : {output}");
+        StopAndExit();
     }
     
     public void Dispose()

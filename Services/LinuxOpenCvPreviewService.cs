@@ -1,11 +1,8 @@
 // Services/LinuxOpenCvPreviewService.cs
 using System;
-using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
-using Avalonia.Platform;
-using Avalonia;
 using Avalonia.Threading;
 using OpenCvSharp;
 using Photobooth.Services;
@@ -53,8 +50,12 @@ namespace Photomaton.Services
                 {
                     throw new ArgumentException($"Mat must be CV_8UC3 (BGR), got {matBgr.Type()}");
                 }
+                var cropped = MatConverter.CropToFourFive(matBgr);
                 
-                var bitMap = MatConverter.ToWriteableBitmapAny(matBgr);
+                // (optionnel) resize pour preview UI
+                //Cv2.Resize(cropped, cropped, new Size(720, 900));
+                
+                var bitMap = MatConverter.ToWriteableBitmapAny(cropped);
                 
                 _wb = bitMap;
                 Dispatcher.UIThread.Post(() => FrameReady?.Invoke(_wb));

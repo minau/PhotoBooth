@@ -75,16 +75,6 @@ public sealed class PhotostripViewModel : ReactiveObject, IDisposable
         _onExit = onExit;
 
         _previewService.FrameReady += OnFrame;
-        /*
-        var uri = new Uri("avares://Photobooth/Assets/strip.jpg");
-        using var stream = AssetLoader.Open(uri);
-        var bmp = new Bitmap(stream);   // <- OK
-        
-        Dispatcher.UIThread.Post(() => PhotostripFrame1 = bmp);
-        Dispatcher.UIThread.Post(() => PhotostripFrame2 = bmp);
-        Dispatcher.UIThread.Post(() => PhotostripFrame3 = bmp);
-        Dispatcher.UIThread.Post(() => PhotostripFrame4 = bmp);
-        */
         
         // lance la séquence automatiquement
         _ = RunSequenceAsync(_cts.Token);
@@ -211,25 +201,16 @@ public sealed class PhotostripViewModel : ReactiveObject, IDisposable
 
     private void Print()
     {
-        // Choisis un dossier de sortie
-        var outDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyPictures),
-             "Photomaton");
-        Directory.CreateDirectory(outDir);
+        var frames = new List<Bitmap>() { PhotostripFrame1, PhotostripFrame2, PhotostripFrame3, PhotostripFrame4 };
 
-        var outfile = Path.Combine(outDir, $"photostrip_{DateTime.Now:yyyyMMdd_HHmmss}.jpg");
+        string output = TemplateRenderer.BuildFromTemplate(
+            templatePath: "avares://Photobooth/Assets/template_grid.png",
+            photos: frames,
+            slots: TemplateRenderer.PhotoStripSlots,
+            outputFileName: $"photostrip_{DateTime.Now:yyyyMMdd_HHmmss}.jpg"
+        );
         
-        var frames = new List<Bitmap>() {PhotostripFrame1, PhotostripFrame2, PhotostripFrame3, PhotostripFrame4};
-        BitmapStitcher.MakeGrid2x2(frames, 
-            1200,
-            900,
-            12,
-            12,
-            background: new Bgra32(255, 255, 255, 255),
-            jpegQuality: 92,
-            outputPath: outfile);
-        
-        Console.WriteLine($"Photostrip sauvé : {outfile}");
+        Console.WriteLine($"Photostrip sauvé : {output}");
         CancelAndExit();
     }
 
