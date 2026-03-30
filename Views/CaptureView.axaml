@@ -23,11 +23,15 @@
         
         <!-- Barre d’action -->
         <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,8,0,0" VerticalAlignment="Bottom">
-            <TextBlock Text="Mode :" VerticalAlignment="Center"/>
-            <TextBlock Text="{Binding Mode}" FontWeight="Bold" VerticalAlignment="Center"/>
-            <Button Content="Quitter" Command="{Binding StopCmd}" Margin="12,0,0,0"/>
-            <Button Content="Recommencer" Command="{Binding RestartCmd}" Margin="12,0,0,0"/>
-            <Button Content="Imprimer" Command="{Binding PrintCmd}" Margin="12,0,0,0"/>
+            <Button Classes="iconButton" Command="{Binding StopCmd}">
+                <Image Source="avares://Photobooth/Assets/icon_cancel.png"/>
+            </Button>
+            <Button Classes="iconButton" Command="{Binding RestartCmd}">
+                <Image Source="avares://Photobooth/Assets/icon_retry.png"/>
+            </Button>
+            <Button Classes="iconButton" Command="{Binding PrintCmd}">
+                <Image Source="avares://Photobooth/Assets/icon_print.png"/>
+            </Button>
         </StackPanel>
     </Grid>
 </UserControl>

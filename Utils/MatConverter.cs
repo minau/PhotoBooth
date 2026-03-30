@@ -1,7 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
 using Avalonia;
-using Avalonia.Logging;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using OpenCvSharp;

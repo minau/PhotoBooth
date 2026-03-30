@@ -15,4 +15,15 @@
             <views:PhotostripView />
         </DataTemplate>
     </Application.DataTemplates>
+    <Application.Styles>
+        
+        <!-- Ton style -->
+        <Style Selector="Button.iconButton">
+            <Setter Property="Width" Value="80"/>
+            <Setter Property="Height" Value="80"/>
+            <Setter Property="Background" Value="#66000000"/>
+            <Setter Property="CornerRadius" Value="40"/>
+        </Style>
+
+    </Application.Styles>
 </Application>
