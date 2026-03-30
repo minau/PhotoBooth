@@ -21,6 +21,8 @@ public partial class App : Application
 
     public override void OnFrameworkInitializationCompleted()
     {
+        ConfigLoader.Load();
+        
         Func<IPreviewService> previewFactory = () => new LinuxOpenCvPreviewService(0, 1280, 720, 30);
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {

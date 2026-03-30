@@ -204,7 +204,7 @@ public sealed class PhotostripViewModel : ReactiveObject, IDisposable
         var frames = new List<Bitmap>() { PhotostripFrame1, PhotostripFrame2, PhotostripFrame3, PhotostripFrame4 };
 
         string output = TemplateRenderer.BuildFromTemplate(
-            templatePath: "avares://Photobooth/Assets/template_grid.png",
+            templatePath: TemplateRenderer.Grid,
             photos: frames,
             slots: TemplateRenderer.PhotoStripSlots,
             outputFileName: $"photostrip_{DateTime.Now:yyyyMMdd_HHmmss}.jpg"

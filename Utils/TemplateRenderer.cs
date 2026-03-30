@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using SixLabors.ImageSharp;
@@ -12,18 +13,29 @@ namespace Photobooth.Utils
 {
     public static class TemplateRenderer
     {
-        public static readonly IReadOnlyList<PhotoSlot> PhotoStripSlots = new List<TemplateRenderer.PhotoSlot>
-        {
-            new() { X = 89,  Y = 94, Width = 1138, Height = 1390 },
-            new() { X = 1254, Y = 94, Width = 1138, Height = 1390 },
-            new() { X = 89,  Y = 1505, Width = 1138, Height = 1390 },
-            new() { X = 1254, Y = 1505, Width = 1138, Height = 1390 }
-        };
+        public static Uri Simple =>
+            new(ConfigLoader.Config.Templates.Simple.Path);
+
+        public static Uri Grid =>
+            new(ConfigLoader.Config.Templates.Grid.Path);
         
-        public static readonly IReadOnlyList<PhotoSlot> PhotoClassicSlots = new List<TemplateRenderer.PhotoSlot>
-        {
-            new() { X = 89,  Y = 94, Width = 2303, Height = 2794 }
-        };
+        public static readonly IReadOnlyList<PhotoSlot> PhotoStripSlots = ConfigLoader.Config.Templates.Grid.Slots.Select(s => new PhotoSlot
+            {
+                X = s.X,
+                Y = s.Y,
+                Width = s.Width,
+                Height = s.Height
+            })
+            .ToList();
+        
+        public static readonly IReadOnlyList<PhotoSlot> PhotoClassicSlots = ConfigLoader.Config.Templates.Simple.Slots.Select(s => new PhotoSlot
+            {
+                X = s.X,
+                Y = s.Y,
+                Width = s.Width,
+                Height = s.Height
+            })
+            .ToList();
         
         public sealed class PhotoSlot
         {
@@ -34,7 +46,7 @@ namespace Photobooth.Utils
         }
 
         public static string BuildFromTemplate(
-            string templatePath,
+            Uri templatePath,
             IReadOnlyList<Bitmap> photos,
             IReadOnlyList<PhotoSlot> slots,
             string outputFileName,
@@ -46,7 +58,7 @@ namespace Photobooth.Utils
             if (slots.Count < photos.Count)
                 throw new ArgumentException("Il n'y a pas assez de slots pour toutes les photos.", nameof(slots));
 
-            using var stream = AssetLoader.Open(new Uri(templatePath));
+            using var stream = AssetLoader.Open(templatePath);
             using var template = Image.Load<Rgba32>(stream);
 
             for (int i = 0; i < photos.Count; i++)

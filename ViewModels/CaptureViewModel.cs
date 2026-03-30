@@ -14,7 +14,7 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
 {
     private readonly IPreviewService  _previewService;
     private readonly Action _onExit;
-    private CancellationTokenSource _cts = new();
+    private readonly CancellationTokenSource _cts = new();
     public string Mode { get; }
 
     // Etat video
@@ -113,7 +113,7 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
         
 
         string output = TemplateRenderer.BuildFromTemplate(
-            templatePath: "avares://Photobooth/Assets/template_simple.png",
+            templatePath: TemplateRenderer.Simple,
             photos: frames,
             slots: TemplateRenderer.PhotoClassicSlots,
             outputFileName: $"photo_{DateTime.Now:yyyyMMdd_HHmmss}.jpg"

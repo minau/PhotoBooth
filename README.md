@@ -24,3 +24,12 @@ dotnet add package OpenCvSharp4.runtime.linux
 ```bash
 dotnet add package SixLabors.ImageSharp
 ```
+
+## 🛠️ Config JSON
+
+```bash
+dotnet add package Microsoft.Extensions.Configuration
+dotnet add package Microsoft.Extensions.Configuration.Json
+dotnet add package Microsoft.Extensions.Configuration.Binder
+dotnet add package Microsoft.Extensions.Configuration.FileExtensions
+```
