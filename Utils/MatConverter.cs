@@ -1,6 +1,7 @@
 using System;
 using System.Runtime.InteropServices;
 using Avalonia;
+using Avalonia.Logging;
 using Avalonia.Media.Imaging;
 using Avalonia.Platform;
 using OpenCvSharp;
@@ -41,8 +42,25 @@ public static class MatConverter
         if (src.Type() == MatType.CV_8UC2)
         {
             // YUV empaqueté (YUY2/UYVY) très courant
-            try { Cv2.CvtColor(src, dstBgra, ColorConversionCodes.YUV2BGRA_YUY2); return; } catch {}
-            try { Cv2.CvtColor(src, dstBgra, ColorConversionCodes.YUV2BGRA_UYVY);  return; } catch {}
+            try
+            {
+                Cv2.CvtColor(src, dstBgra, ColorConversionCodes.YUV2BGRA_YUY2);
+                return;
+            }
+            catch
+            {
+                // Log here
+            }
+
+            try
+            {
+                Cv2.CvtColor(src, dstBgra, ColorConversionCodes.YUV2BGRA_UYVY);
+                return;
+            }
+            catch
+            {
+                // Log here
+            }
         }
 
         if (src.Type() == MatType.CV_8UC1)
@@ -52,8 +70,25 @@ public static class MatConverter
         }
 
         // NV12/NV21 (certains backends macOS)
-        try { Cv2.CvtColor(src, dstBgra, ColorConversionCodes.YUV2BGRA_NV12); return; } catch {}
-        try { Cv2.CvtColor(src, dstBgra, ColorConversionCodes.YUV2BGRA_NV21); return; } catch {}
+        try
+        {
+            Cv2.CvtColor(src, dstBgra, ColorConversionCodes.YUV2BGRA_NV12);
+            return;
+        }
+        catch
+        {
+            // Log here
+        }
+
+        try
+        {
+            Cv2.CvtColor(src, dstBgra, ColorConversionCodes.YUV2BGRA_NV21);
+            return;
+        }
+        catch
+        {
+            // Log here
+        }
 
         // Dernier recours (si profondeur != 8 bits)
         if (src.Depth() != MatType.CV_8U)

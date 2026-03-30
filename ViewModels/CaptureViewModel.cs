@@ -128,5 +128,6 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
         _cts.Cancel();
         _previewService.FrameReady -= OnFrameReady;
         _previewService.Dispose();
+        _cts.Dispose();
     }
 }

@@ -49,19 +49,4 @@ public class MainWindowViewModel : ReactiveObject
             }
         });
     }
-
-    /*
-    private void SavePictures()
-    {
-        var outDir = Path.Combine(
-            Environment.GetFolderPath(Environment.SpecialFolder.MyPictures), "Photomaton");
-        Directory.CreateDirectory(outDir);
-        string file = Path.Combine(outDir, $"photo_{DateTime.Now:yyyyMMdd_HHmmss}.jpg");
-        if (PreviewImage != null)
-        {
-            WriteableBitmap bm = (WriteableBitmap) PreviewImage;
-            bm.SaveAsJpeg(file);
-        }
-    }
-    */
 }

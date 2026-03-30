@@ -52,9 +52,6 @@ namespace Photomaton.Services
                 }
                 var cropped = MatConverter.CropToFourFive(matBgr);
                 
-                // (optionnel) resize pour preview UI
-                //Cv2.Resize(cropped, cropped, new Size(720, 900));
-                
                 var bitMap = MatConverter.ToWriteableBitmapAny(cropped);
                 
                 _wb = bitMap;
@@ -62,7 +59,15 @@ namespace Photomaton.Services
             }
         }
 
-        public void Stop() => _cts?.Cancel();
-        public void Dispose() => Stop();
+        public void Stop()
+        {
+            _cts?.Cancel();
+        }
+
+        public void Dispose()
+        {
+            Stop();
+            _cts?.Dispose();
+        }
     }
 }

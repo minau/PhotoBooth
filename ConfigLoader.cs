@@ -2,6 +2,8 @@ using System;
 using Microsoft.Extensions.Configuration;
 using Photobooth;
 
+namespace Photobooth;
+
 public static class ConfigLoader
 {
     private static AppConfigRoot? _config;
@@ -17,5 +19,5 @@ public static class ConfigLoader
     }
 
     public static AppConfigRoot Config =>
-        _config ?? throw new Exception("Config non chargée. Appelle ConfigLoader.Load() au démarrage.");
+        _config ?? throw new MissingFieldException("Config non chargée. Appelle ConfigLoader.Load() au démarrage.");
 }
