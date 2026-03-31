@@ -15,7 +15,8 @@ namespace Photomaton.Services
     {
         private readonly int _deviceIndex, _w, _h, _fps;
         private VideoCapture? _cap;
-        private WriteableBitmap? _wb;
+        private WriteableBitmap? _frontBuffer;
+        private WriteableBitmap? _backBuffer;
         private CancellationTokenSource? _cts;
         private readonly object _latestFrameLock = new();
         private Mat? _latestFrame;
@@ -120,14 +121,21 @@ namespace Photomaton.Services
                 }
 
                 using var cropped = MatConverter.CropToFourFive(frame);
-                if (_wb is null || _wb.PixelSize.Width != cropped.Width || _wb.PixelSize.Height != cropped.Height)
+                if (_frontBuffer is null || _backBuffer is null ||
+                    _frontBuffer.PixelSize.Width != cropped.Width || _frontBuffer.PixelSize.Height != cropped.Height)
                 {
-                    _wb = MatConverter.CreateBgraBitmap(cropped.Width, cropped.Height);
-                    Log($"Allocated preview bitmap {_wb.PixelSize.Width}x{_wb.PixelSize.Height}.");
+                    _frontBuffer = MatConverter.CreateBgraBitmap(cropped.Width, cropped.Height);
+                    _backBuffer = MatConverter.CreateBgraBitmap(cropped.Width, cropped.Height);
+                    Log($"Allocated double preview buffers {_frontBuffer.PixelSize.Width}x{_frontBuffer.PixelSize.Height}.");
                 }
 
-                MatConverter.CopyToWriteableBitmapAny(cropped, _wb);
-                Dispatcher.UIThread.Post(() => FrameReady?.Invoke(_wb));
+                MatConverter.CopyToWriteableBitmapAny(cropped, _backBuffer);
+
+                var displayBuffer = _backBuffer;
+                _backBuffer = _frontBuffer;
+                _frontBuffer = displayBuffer;
+
+                Dispatcher.UIThread.Post(() => FrameReady?.Invoke(displayBuffer));
 
                 processedFrames++;
                 if (sw.ElapsedMilliseconds >= 5000)
@@ -155,6 +163,9 @@ namespace Photomaton.Services
                 _latestFrame = null;
                 Volatile.Write(ref _isFrameReady, 0);
             }
+
+            _frontBuffer = null;
+            _backBuffer = null;
 
             Log("Preview service stopped.");
         }
