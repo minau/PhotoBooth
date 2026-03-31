@@ -29,7 +29,7 @@ public sealed class SharedVideoCapture : IDisposable
     {
         lock (_sync)
         {
-            if (_capture is { IsOpened: true })
+            if (_capture?.IsOpened() == true)
             {
                 return _capture;
             }
