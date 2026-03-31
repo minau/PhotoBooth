@@ -1,6 +1,7 @@
 // Services/LinuxOpenCvPreviewService.cs
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
@@ -16,6 +17,8 @@ namespace Photomaton.Services
         private readonly int _deviceIndex, _w, _h, _fps;
         private VideoCapture? _cap;
         private CancellationTokenSource? _cts;
+        private Task? _captureTask;
+        private Task? _renderTask;
         private readonly object _latestFrameLock = new();
         private Mat? _latestFrame;
         private int _isFrameReady;
@@ -50,8 +53,8 @@ namespace Photomaton.Services
             Log($"Camera started (device={_deviceIndex}, {_w}x{_h}@{_fps}, fourcc=MJPG).");
 
             _cts = new CancellationTokenSource();
-            _ = Task.Run(() => CaptureLoop(_cts.Token), _cts.Token);
-            _ = Task.Run(() => RenderLoop(_cts.Token), _cts.Token);
+            _captureTask = Task.Run(() => CaptureLoop(_cts.Token), _cts.Token);
+            _renderTask = Task.Run(() => RenderLoop(_cts.Token), _cts.Token);
             return true;
         }
 
@@ -62,7 +65,18 @@ namespace Photomaton.Services
 
             while (!ct.IsCancellationRequested)
             {
-                if (!(_cap?.Read(matBgr) ?? false) || matBgr.Empty())
+                bool hasFrame;
+                try
+                {
+                    hasFrame = _cap?.Read(matBgr) ?? false;
+                }
+                catch (Exception ex)
+                {
+                    Log($"Camera read failed: {ex.Message}");
+                    break;
+                }
+
+                if (!hasFrame || matBgr.Empty())
                 {
                     emptyReads++;
                     if (emptyReads % 120 == 0)
@@ -118,8 +132,17 @@ namespace Photomaton.Services
                     continue;
                 }
 
-                using var cropped = MatConverter.CropToFourFive(frame);
-                var bitmap = MatConverter.ToWriteableBitmapAny(cropped);
+                WriteableBitmap bitmap;
+                try
+                {
+                    using var cropped = MatConverter.CropToFourFive(frame);
+                    bitmap = MatConverter.ToWriteableBitmapAny(cropped);
+                }
+                catch (Exception ex)
+                {
+                    Log($"Frame conversion failed: {ex.Message}");
+                    continue;
+                }
 
                 Dispatcher.UIThread.Post(() =>
                 {
@@ -149,6 +172,19 @@ namespace Photomaton.Services
         public void Stop()
         {
             _cts?.Cancel();
+
+            try
+            {
+                Task.WaitAll(new[] { _captureTask, _renderTask }.Where(t => t is not null).Cast<Task>().ToArray(), 1000);
+            }
+            catch (Exception ex)
+            {
+                Log($"Error while stopping tasks: {ex.Message}");
+            }
+
+            _captureTask = null;
+            _renderTask = null;
+
             _cap?.Release();
             _cap?.Dispose();
             _cap = null;
