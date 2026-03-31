@@ -23,9 +23,20 @@ public partial class App : Application
     {
         ConfigLoader.Load();
         
-        Func<IPreviewService> previewFactory = () => new LinuxOpenCvPreviewService(0, 1280, 720, 30);
+        var sharedVideoCapture = new SharedVideoCapture(0, 1280, 720, 30);
+        try
+        {
+            sharedVideoCapture.WarmUp();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"[{DateTime.UtcNow:O}] [App] Camera warmup failed: {ex.Message}");
+        }
+
+        Func<IPreviewService> previewFactory = () => new LinuxOpenCvPreviewService(sharedVideoCapture, 0, 1280, 720, 30);
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
+            desktop.Exit += (_, _) => sharedVideoCapture.Dispose();
             desktop.MainWindow = new MainWindow
             {
                 DataContext = new MainWindowViewModel(previewFactory),

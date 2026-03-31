@@ -14,6 +14,7 @@ namespace Photomaton.Services
 {
     public sealed class LinuxOpenCvPreviewService : IPreviewService
     {
+        private readonly SharedVideoCapture _sharedCapture;
         private readonly int _deviceIndex, _w, _h, _fps;
         private VideoCapture? _cap;
         private CancellationTokenSource? _cts;
@@ -26,8 +27,14 @@ namespace Photomaton.Services
         public event Action<Bitmap?>? FrameReady;
         public bool IsRunning => _cts is { IsCancellationRequested: false };
 
-        public LinuxOpenCvPreviewService(int deviceIndex = 0, int w = 1280, int h = 720, int fps = 30)
-        { _deviceIndex = deviceIndex; _w = w; _h = h; _fps = fps; }
+        public LinuxOpenCvPreviewService(SharedVideoCapture sharedCapture, int deviceIndex = 0, int w = 1280, int h = 720, int fps = 30)
+        {
+            _sharedCapture = sharedCapture;
+            _deviceIndex = deviceIndex;
+            _w = w;
+            _h = h;
+            _fps = fps;
+        }
 
         public bool Start()
         {
@@ -37,20 +44,17 @@ namespace Photomaton.Services
                 return true;
             }
 
-            _cap = new VideoCapture(_deviceIndex);
-            if (!_cap.IsOpened())
+            try
             {
-                Log($"Failed to open camera device index {_deviceIndex}.");
+                _cap = _sharedCapture.GetOrCreate();
+            }
+            catch (Exception ex)
+            {
+                Log($"Failed to start shared camera: {ex.Message}");
                 return false;
             }
 
-            _cap.Set(VideoCaptureProperties.FrameWidth, _w);
-            _cap.Set(VideoCaptureProperties.FrameHeight, _h);
-            _cap.Set(VideoCaptureProperties.Fps, _fps);
-            _cap.Set(VideoCaptureProperties.FourCC, FourCC.MJPG); // réduit la charge CPU
-            _cap.Set(VideoCaptureProperties.BufferSize, 1); // limite la latence et la pression CPU
-
-            Log($"Camera started (device={_deviceIndex}, {_w}x{_h}@{_fps}, fourcc=MJPG).");
+            Log($"Camera started (shared instance, device={_deviceIndex}, {_w}x{_h}@{_fps}, fourcc=MJPG).");
 
             _cts = new CancellationTokenSource();
             _captureTask = Task.Run(() => CaptureLoop(_cts.Token), _cts.Token);
@@ -185,8 +189,7 @@ namespace Photomaton.Services
             _captureTask = null;
             _renderTask = null;
 
-            _cap?.Release();
-            _cap?.Dispose();
+            // Keep shared VideoCapture alive to avoid expensive reopen delay between shots.
             _cap = null;
 
             lock (_latestFrameLock)
