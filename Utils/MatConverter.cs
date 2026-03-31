@@ -160,6 +160,33 @@ public static class MatConverter
         }
     }
 
+    public static void CopyBgraBytesToBitmap(byte[] bgraBytes, int srcStride, int width, int height, WriteableBitmap wb)
+    {
+        if (bgraBytes is null) throw new ArgumentNullException(nameof(bgraBytes));
+        if (width <= 0 || height <= 0) throw new ArgumentOutOfRangeException(nameof(width));
+        if (srcStride < width * 4) throw new ArgumentOutOfRangeException(nameof(srcStride));
+        if (wb.PixelSize.Width != width || wb.PixelSize.Height != height)
+            throw new ArgumentException("WriteableBitmap size does not match source buffer.", nameof(wb));
+
+        using var fb = wb.Lock();
+        int dstStride = fb.RowBytes;
+        int rowBytes = width * 4;
+
+        for (int y = 0; y < height; y++)
+        {
+            IntPtr dstPtr = fb.Address + y * dstStride;
+
+            unsafe
+            {
+                fixed (byte* srcBase = bgraBytes)
+                {
+                    var srcPtr = srcBase + y * srcStride;
+                    Buffer.MemoryCopy(srcPtr, dstPtr.ToPointer(), rowBytes, rowBytes);
+                }
+            }
+        }
+    }
+
     public static Mat CropToFourFive(Mat frame)
     {
         var targetRatio = 4.0 / 5.0;

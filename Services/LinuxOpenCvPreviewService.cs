@@ -1,6 +1,8 @@
 // Services/LinuxOpenCvPreviewService.cs
 using System;
+using System.Buffers;
 using System.Diagnostics;
+using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
@@ -16,11 +18,11 @@ namespace Photomaton.Services
         private readonly int _deviceIndex, _w, _h, _fps;
         private VideoCapture? _cap;
         private WriteableBitmap? _frontBuffer;
-        private WriteableBitmap? _backBuffer;
         private CancellationTokenSource? _cts;
         private readonly object _latestFrameLock = new();
         private Mat? _latestFrame;
         private int _isFrameReady;
+        private int _uiPublishPending;
 
         public event Action<Bitmap?>? FrameReady;
         public bool IsRunning => _cts is { IsCancellationRequested: false };
@@ -121,21 +123,58 @@ namespace Photomaton.Services
                 }
 
                 using var cropped = MatConverter.CropToFourFive(frame);
-                if (_frontBuffer is null || _backBuffer is null ||
-                    _frontBuffer.PixelSize.Width != cropped.Width || _frontBuffer.PixelSize.Height != cropped.Height)
+                using var bgra = new Mat();
+                MatConverter.ToBgra(cropped, bgra);
+                Cv2.Flip(bgra, bgra, FlipMode.Y);
+
+                if (Interlocked.CompareExchange(ref _uiPublishPending, 1, 0) != 0)
                 {
-                    _frontBuffer = MatConverter.CreateBgraBitmap(cropped.Width, cropped.Height);
-                    _backBuffer = MatConverter.CreateBgraBitmap(cropped.Width, cropped.Height);
-                    Log($"Allocated double preview buffers {_frontBuffer.PixelSize.Width}x{_frontBuffer.PixelSize.Height}.");
+                    continue;
                 }
 
-                MatConverter.CopyToWriteableBitmapAny(cropped, _backBuffer);
+                var rowBytes = bgra.Cols * 4;
+                var totalBytes = rowBytes * bgra.Rows;
+                var pooledBuffer = ArrayPool<byte>.Shared.Rent(totalBytes);
 
-                var displayBuffer = _backBuffer;
-                _backBuffer = _frontBuffer;
-                _frontBuffer = displayBuffer;
+                try
+                {
+                    Marshal.Copy(bgra.Data, pooledBuffer, 0, totalBytes);
+                }
+                catch (Exception ex)
+                {
+                    ArrayPool<byte>.Shared.Return(pooledBuffer);
+                    Interlocked.Exchange(ref _uiPublishPending, 0);
+                    Log($"Failed to copy BGRA frame: {ex.Message}");
+                    continue;
+                }
 
-                Dispatcher.UIThread.Post(() => FrameReady?.Invoke(displayBuffer));
+                var width = bgra.Cols;
+                var height = bgra.Rows;
+                var stride = rowBytes;
+
+                Dispatcher.UIThread.Post(() =>
+                {
+                    try
+                    {
+                        if (_frontBuffer is null || _frontBuffer.PixelSize.Width != width || _frontBuffer.PixelSize.Height != height)
+                        {
+                            _frontBuffer = MatConverter.CreateBgraBitmap(width, height);
+                            Log($"Allocated preview bitmap {_frontBuffer.PixelSize.Width}x{_frontBuffer.PixelSize.Height}.");
+                        }
+
+                        MatConverter.CopyBgraBytesToBitmap(pooledBuffer, stride, width, height, _frontBuffer);
+                        FrameReady?.Invoke(_frontBuffer);
+                    }
+                    catch (Exception ex)
+                    {
+                        Log($"UI frame publish failed: {ex.Message}");
+                    }
+                    finally
+                    {
+                        ArrayPool<byte>.Shared.Return(pooledBuffer);
+                        Interlocked.Exchange(ref _uiPublishPending, 0);
+                    }
+                });
 
                 processedFrames++;
                 if (sw.ElapsedMilliseconds >= 5000)
@@ -165,7 +204,7 @@ namespace Photomaton.Services
             }
 
             _frontBuffer = null;
-            _backBuffer = null;
+            Interlocked.Exchange(ref _uiPublishPending, 0);
 
             Log("Preview service stopped.");
         }
