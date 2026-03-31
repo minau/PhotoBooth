@@ -132,8 +132,8 @@ namespace Photomaton.Services
                     continue;
                 }
 
-                var rowBytes = bgra.Cols * 4;
-                var totalBytes = rowBytes * bgra.Rows;
+                var srcStride = (int)bgra.Step();
+                var totalBytes = srcStride * bgra.Rows;
                 var pooledBuffer = ArrayPool<byte>.Shared.Rent(totalBytes);
 
                 try
@@ -150,7 +150,7 @@ namespace Photomaton.Services
 
                 var width = bgra.Cols;
                 var height = bgra.Rows;
-                var stride = rowBytes;
+                var stride = srcStride;
 
                 Dispatcher.UIThread.Post(() =>
                 {
