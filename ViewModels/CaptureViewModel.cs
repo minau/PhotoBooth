@@ -59,6 +59,16 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
     private void OnFrameReady(Bitmap? bitmap)
     {
         if (IsFrozen) return;
+
+        // Le service de preview peut réutiliser la même instance de WriteableBitmap
+        // pour réduire les allocations. Dans ce cas, RaiseAndSetIfChanged ne déclenche
+        // pas de notification (référence identique), donc on force le rafraîchissement UI.
+        if (ReferenceEquals(_frame, bitmap))
+        {
+            this.RaisePropertyChanged(nameof(Frame));
+            return;
+        }
+
         Frame = bitmap;
     }
 
