@@ -1,8 +1,6 @@
 // Services/LinuxOpenCvPreviewService.cs
 using System;
-using System.Buffers;
 using System.Diagnostics;
-using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using Avalonia.Media.Imaging;
@@ -17,12 +15,10 @@ namespace Photomaton.Services
     {
         private readonly int _deviceIndex, _w, _h, _fps;
         private VideoCapture? _cap;
-        private WriteableBitmap? _frontBuffer;
         private CancellationTokenSource? _cts;
         private readonly object _latestFrameLock = new();
         private Mat? _latestFrame;
         private int _isFrameReady;
-        private int _uiPublishPending;
 
         public event Action<Bitmap?>? FrameReady;
         public bool IsRunning => _cts is { IsCancellationRequested: false };
@@ -123,56 +119,17 @@ namespace Photomaton.Services
                 }
 
                 using var cropped = MatConverter.CropToFourFive(frame);
-                using var bgra = new Mat();
-                MatConverter.ToBgra(cropped, bgra);
-                Cv2.Flip(bgra, bgra, FlipMode.Y);
-
-                if (Interlocked.CompareExchange(ref _uiPublishPending, 1, 0) != 0)
-                {
-                    continue;
-                }
-
-                var srcStride = (int)bgra.Step();
-                var totalBytes = srcStride * bgra.Rows;
-                var pooledBuffer = ArrayPool<byte>.Shared.Rent(totalBytes);
-
-                try
-                {
-                    Marshal.Copy(bgra.Data, pooledBuffer, 0, totalBytes);
-                }
-                catch (Exception ex)
-                {
-                    ArrayPool<byte>.Shared.Return(pooledBuffer);
-                    Interlocked.Exchange(ref _uiPublishPending, 0);
-                    Log($"Failed to copy BGRA frame: {ex.Message}");
-                    continue;
-                }
-
-                var width = bgra.Cols;
-                var height = bgra.Rows;
-                var stride = srcStride;
+                var bitmap = MatConverter.ToWriteableBitmapAny(cropped);
 
                 Dispatcher.UIThread.Post(() =>
                 {
                     try
                     {
-                        if (_frontBuffer is null || _frontBuffer.PixelSize.Width != width || _frontBuffer.PixelSize.Height != height)
-                        {
-                            _frontBuffer = MatConverter.CreateBgraBitmap(width, height);
-                            Log($"Allocated preview bitmap {_frontBuffer.PixelSize.Width}x{_frontBuffer.PixelSize.Height}.");
-                        }
-
-                        MatConverter.CopyBgraBytesToBitmap(pooledBuffer, stride, width, height, _frontBuffer);
-                        FrameReady?.Invoke(_frontBuffer);
+                        FrameReady?.Invoke(bitmap);
                     }
                     catch (Exception ex)
                     {
                         Log($"UI frame publish failed: {ex.Message}");
-                    }
-                    finally
-                    {
-                        ArrayPool<byte>.Shared.Return(pooledBuffer);
-                        Interlocked.Exchange(ref _uiPublishPending, 0);
                     }
                 });
 
@@ -202,9 +159,6 @@ namespace Photomaton.Services
                 _latestFrame = null;
                 Volatile.Write(ref _isFrameReady, 0);
             }
-
-            _frontBuffer = null;
-            Interlocked.Exchange(ref _uiPublishPending, 0);
 
             Log("Preview service stopped.");
         }
