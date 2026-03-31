@@ -48,7 +48,7 @@ namespace Photomaton.Services
             _cap.Set(VideoCaptureProperties.FrameHeight, _h);
             _cap.Set(VideoCaptureProperties.Fps, _fps);
             _cap.Set(VideoCaptureProperties.FourCC, FourCC.MJPG); // réduit la charge CPU
-            _cap.Set(VideoCaptureProperties.Buffersize, 1); // limite la latence et la pression CPU
+            _cap.Set(VideoCaptureProperties.BufferSize, 1); // limite la latence et la pression CPU
 
             Log($"Camera started (device={_deviceIndex}, {_w}x{_h}@{_fps}, fourcc=MJPG).");
 
