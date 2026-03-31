@@ -13,6 +13,14 @@ namespace Photobooth.Utils;
 
 public static class MatConverter
 {
+    public static WriteableBitmap CreateBgraBitmap(int width, int height)
+    {
+        return new WriteableBitmap(
+            new PixelSize(width, height),
+            new Vector(96, 96),
+            PixelFormat.Bgra8888);
+    }
+
     public static void ToBgra(Mat src, Mat dstBgra)
     {
         if (src.Empty()) throw new ArgumentException("Mat is empty");
@@ -108,11 +116,29 @@ public static class MatConverter
         using var matBgra = new Mat();
         ToBgra(src, matBgra);
         Cv2.Flip(matBgra, matBgra, FlipMode.Y);
-        //720 * 1280 * CV8U_C4
-        var wb = new WriteableBitmap(
-            new PixelSize(matBgra.Cols, matBgra.Rows),
-            new Vector(96, 96),
-            PixelFormat.Bgra8888);
+        var wb = CreateBgraBitmap(matBgra.Cols, matBgra.Rows);
+
+        CopyBgraMatToBitmap(matBgra, wb);
+
+        return wb;
+    }
+
+    public static void CopyToWriteableBitmapAny(Mat src, WriteableBitmap wb)
+    {
+        using var matBgra = new Mat();
+        ToBgra(src, matBgra);
+        Cv2.Flip(matBgra, matBgra, FlipMode.Y);
+        CopyBgraMatToBitmap(matBgra, wb);
+    }
+
+    private static void CopyBgraMatToBitmap(Mat matBgra, WriteableBitmap wb)
+    {
+        if (matBgra.Empty()) throw new ArgumentException("Mat is empty", nameof(matBgra));
+        if (matBgra.Type() != MatType.CV_8UC4)
+            throw new ArgumentException($"Mat must be CV_8UC4 (BGRA), got {matBgra.Type()}");
+
+        if (wb.PixelSize.Width != matBgra.Cols || wb.PixelSize.Height != matBgra.Rows)
+            throw new ArgumentException("WriteableBitmap size does not match source Mat.", nameof(wb));
 
         using (var fb = wb.Lock())
         {
@@ -132,8 +158,33 @@ public static class MatConverter
                 }
             }
         }
+    }
 
-        return wb;
+    public static void CopyBgraBytesToBitmap(byte[] bgraBytes, int srcStride, int width, int height, WriteableBitmap wb)
+    {
+        if (bgraBytes is null) throw new ArgumentNullException(nameof(bgraBytes));
+        if (width <= 0 || height <= 0) throw new ArgumentOutOfRangeException(nameof(width));
+        if (srcStride < width * 4) throw new ArgumentOutOfRangeException(nameof(srcStride));
+        if (wb.PixelSize.Width != width || wb.PixelSize.Height != height)
+            throw new ArgumentException("WriteableBitmap size does not match source buffer.", nameof(wb));
+
+        using var fb = wb.Lock();
+        int dstStride = fb.RowBytes;
+        int rowBytes = width * 4;
+
+        for (int y = 0; y < height; y++)
+        {
+            IntPtr dstPtr = fb.Address + y * dstStride;
+
+            unsafe
+            {
+                fixed (byte* srcBase = bgraBytes)
+                {
+                    var srcPtr = srcBase + y * srcStride;
+                    Buffer.MemoryCopy(srcPtr, dstPtr.ToPointer(), rowBytes, rowBytes);
+                }
+            }
+        }
     }
 
     public static Mat CropToFourFive(Mat frame)
