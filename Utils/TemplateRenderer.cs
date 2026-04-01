@@ -52,6 +52,35 @@ namespace Photobooth.Utils
             string outputFileName,
             int jpegQuality = 92)
         {
+            using var template = ComposeTemplate(templatePath, photos, slots);
+
+            string pictures = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
+            string outputDir = Path.Combine(pictures, "Photobooth");
+            Directory.CreateDirectory(outputDir);
+            string outputPath = Path.Combine(outputDir, outputFileName);
+            
+            template.SaveAsJpeg(outputPath, new JpegEncoder { Quality = jpegQuality });
+
+            return outputPath;
+        }
+
+        public static Bitmap RenderToBitmap(
+            Uri templatePath,
+            IReadOnlyList<Bitmap> photos,
+            IReadOnlyList<PhotoSlot> slots)
+        {
+            using var template = ComposeTemplate(templatePath, photos, slots);
+            using var ms = new MemoryStream();
+            template.SaveAsPng(ms);
+            ms.Position = 0;
+            return new Bitmap(ms);
+        }
+
+        private static Image<Rgba32> ComposeTemplate(
+            Uri templatePath,
+            IReadOnlyList<Bitmap> photos,
+            IReadOnlyList<PhotoSlot> slots)
+        {
             if (photos.Count == 0)
                 throw new ArgumentException("La liste de photos est vide.", nameof(photos));
 
@@ -59,7 +88,7 @@ namespace Photobooth.Utils
                 throw new ArgumentException("Il n'y a pas assez de slots pour toutes les photos.", nameof(slots));
 
             using var stream = AssetLoader.Open(templatePath);
-            using var template = Image.Load<Rgba32>(stream);
+            var template = Image.Load<Rgba32>(stream);
 
             for (int i = 0; i < photos.Count; i++)
             {
@@ -72,14 +101,7 @@ namespace Photobooth.Utils
                 });
             }
 
-            string pictures = Environment.GetFolderPath(Environment.SpecialFolder.MyPictures);
-            string outputDir = Path.Combine(pictures, "Photobooth");
-            Directory.CreateDirectory(outputDir);
-            string outputPath = Path.Combine(outputDir, outputFileName);
-            
-            template.SaveAsJpeg(outputPath, new JpegEncoder { Quality = jpegQuality });
-
-            return outputPath;
+            return template;
         }
 
         private static Image<Rgba32> AvaloniaBitmapToImageSharp(Bitmap bitmap)

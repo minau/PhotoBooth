@@ -28,7 +28,14 @@
                 <Image Source="{Binding Frame}"
                        Stretch="Uniform"
                        HorizontalAlignment="Center"
-                       VerticalAlignment="Center"/>
+                       VerticalAlignment="Center"
+                       IsVisible="{Binding IsCameraPreviewVisible}"/>
+
+                <Image Source="{Binding FinalPreview}"
+                       Stretch="Uniform"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"
+                       IsVisible="{Binding IsFinalPreviewVisible}"/>
 
                 <!-- Countdown -->
                 <Border Background="#66000000"
@@ -79,7 +86,8 @@
                     </Button>
 
                     <Button Classes="iconButton"
-                            Command="{Binding PrintCmd}">
+                            Command="{Binding PrintCmd}"
+                            IsEnabled="{Binding IsFinalPreviewVisible}">
                         <Image Width="42" Height="42"
                                Source="avares://Photobooth/Assets/icon_print.png"/>
                     </Button>

@@ -35,6 +35,26 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
 
     private bool _isFrozen;
     public bool IsFrozen { get => _isFrozen; set => this.RaiseAndSetIfChanged(ref _isFrozen, value); }
+
+    private Bitmap? _finalPreview;
+    public Bitmap? FinalPreview
+    {
+        get => _finalPreview;
+        set => this.RaiseAndSetIfChanged(ref _finalPreview, value);
+    }
+
+    private bool _isFinalPreviewVisible;
+    public bool IsFinalPreviewVisible
+    {
+        get => _isFinalPreviewVisible;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _isFinalPreviewVisible, value);
+            this.RaisePropertyChanged(nameof(IsCameraPreviewVisible));
+        }
+    }
+
+    public bool IsCameraPreviewVisible => !IsFinalPreviewVisible;
     public ReactiveCommand<Unit, Unit> StopCmd { get; }
     public ReactiveCommand<Unit, Unit> RestartCmd { get; }
     public ReactiveCommand<Unit, Unit> PrintCmd { get; }
@@ -96,6 +116,7 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
         IsFrozen = true;
         IsCounting = false;
         _previewService.Stop();
+        BuildFinalPreview();
     }
 
     private void StopAndExit()
@@ -110,13 +131,28 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
         RemainingSeconds = 5;
         IsFrozen = false;
         IsCounting = true;
+        IsFinalPreviewVisible = false;
+        FinalPreview = null;
         _previewService.Start();
         _ = RunCountdownAndFreezeAsync(_cts.Token);
         
     }
     
+    private void BuildFinalPreview()
+    {
+        if (Frame is null) return;
+
+        var frames = new List<Bitmap>() { Frame };
+        FinalPreview = TemplateRenderer.RenderToBitmap(
+            templatePath: TemplateRenderer.Simple,
+            photos: frames,
+            slots: TemplateRenderer.PhotoClassicSlots);
+        IsFinalPreviewVisible = true;
+    }
+
     private void Print()
     {
+        if (Frame is null) return;
         var frames = new List<Bitmap>() { Frame };
         
         // coordonnées à adapter à ton template réel
