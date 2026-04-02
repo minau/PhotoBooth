@@ -72,6 +72,7 @@
 
             <Button Classes="iconButton"
                     Command="{Binding PrintCmd}"
+                    IsVisible="{Binding IsFinalPreviewVisible}"
                     IsEnabled="{Binding IsFinalPreviewVisible}">
                 <Image Width="42"
                        Height="42"
