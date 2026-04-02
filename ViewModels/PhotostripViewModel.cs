@@ -10,7 +10,6 @@ using Avalonia.Threading;
 using Photobooth.Services;
 using Photobooth.Utils;
 using ReactiveUI;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Photobooth.ViewModels;
 
@@ -119,23 +118,26 @@ public sealed class PhotostripViewModel : ReactiveObject, IDisposable
         Step = 1;
         await LaunchCounter(ct);
         var thumb1 = FreezeAndCapture();
-        Dispatcher.UIThread.Post(() => PhotostripFrame1 = thumb1);
+        await Dispatcher.UIThread.InvokeAsync(() => PhotostripFrame1 = thumb1);
         await RestartPreviewService(ct);
         Step = 2;
         await LaunchCounter(ct);
         var thumb2 = FreezeAndCapture();
-        Dispatcher.UIThread.Post(() => PhotostripFrame2 = thumb2);
+        await Dispatcher.UIThread.InvokeAsync(() => PhotostripFrame2 = thumb2);
         await RestartPreviewService(ct);
         Step = 3;
         await LaunchCounter(ct);
         var thumb3 = FreezeAndCapture();
-        Dispatcher.UIThread.Post(() => PhotostripFrame3 = thumb3);
+        await Dispatcher.UIThread.InvokeAsync(() => PhotostripFrame3 = thumb3);
         await RestartPreviewService(ct);
         Step = 4;
         await LaunchCounter(ct);
         var thumb4 = FreezeAndCapture();
-        Dispatcher.UIThread.Post(() => PhotostripFrame4 = thumb4);
-        BuildFinalPreview();
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            PhotostripFrame4 = thumb4;
+            BuildFinalPreview();
+        });
     }
 
     private async Task LaunchCounter(CancellationToken ct)
