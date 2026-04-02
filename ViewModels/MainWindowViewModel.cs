@@ -15,6 +15,7 @@ namespace Photobooth.ViewModels;
 public class MainWindowViewModel : ReactiveObject
 {
     private readonly Func<IPreviewService> _previewFactory;
+    private readonly IPrintQueueService _printQueueService;
 
     private object? _currentView;
 
@@ -24,9 +25,10 @@ public class MainWindowViewModel : ReactiveObject
         set => this.RaiseAndSetIfChanged(ref _currentView, value);
     }
 
-    public MainWindowViewModel(Func<IPreviewService> previewFactory)
+    public MainWindowViewModel(Func<IPreviewService> previewFactory, IPrintQueueService printQueueService)
     {
         _previewFactory = previewFactory;
+        _printQueueService = printQueueService;
         ShowMain();
     }
 
@@ -39,14 +41,14 @@ public class MainWindowViewModel : ReactiveObject
             switch (captureModel)
             {
                 case CaptureModel.Classic:
-                    CurrentView = new CaptureViewModel(preview, captureModel.ToString(), onExit: ShowMain);
+                    CurrentView = new CaptureViewModel(preview, _printQueueService, captureModel.ToString(), onExit: ShowMain);
                     break;
                 case CaptureModel.Photostrip:
-                    CurrentView = new PhotostripViewModel(preview, onExit: ShowMain);
+                    CurrentView = new PhotostripViewModel(preview, _printQueueService, onExit: ShowMain);
                     break;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(captureModel), captureModel, null);
             }
-        });
+        }, _printQueueService);
     }
 }

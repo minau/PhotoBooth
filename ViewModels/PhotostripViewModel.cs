@@ -16,6 +16,7 @@ namespace Photobooth.ViewModels;
 public sealed class PhotostripViewModel : ReactiveObject, IDisposable
 {
     private readonly IPreviewService _previewService;
+    private readonly IPrintQueueService _printQueueService;
     private readonly Action _onExit;
     private readonly CancellationTokenSource _cts = new();
     
@@ -88,9 +89,10 @@ public sealed class PhotostripViewModel : ReactiveObject, IDisposable
     public ReactiveCommand<Unit, Unit> RestartCmd { get; }
     public ReactiveCommand<Unit, Unit> PrintCmd { get; }
 
-    public PhotostripViewModel(IPreviewService previewService, Action onExit)
+    public PhotostripViewModel(IPreviewService previewService, IPrintQueueService printQueueService, Action onExit)
     {
         _previewService = previewService;
+        _printQueueService = printQueueService;
         _onExit = onExit;
 
         _previewService.FrameReady += OnFrame;
@@ -248,8 +250,14 @@ public sealed class PhotostripViewModel : ReactiveObject, IDisposable
             outputFileName: $"photostrip_{DateTime.Now:yyyyMMdd_HHmmss}.jpg"
         );
         
-        Console.WriteLine($"Photostrip sauvé : {output}");
-        CancelAndExit();
+        if (_printQueueService.TryEnqueue(output))
+        {
+            Console.WriteLine($"Photostrip ajouté à la pile d'impression : {output}");
+            CancelAndExit();
+            return;
+        }
+
+        Console.WriteLine("Pile d'impression pleine (max 2 tâches).");
     }
 
     public void Dispose()
