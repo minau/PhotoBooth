@@ -6,18 +6,16 @@
     <StackPanel Margin="24" Spacing="16" HorizontalAlignment="Center" VerticalAlignment="Center">
         <TextBlock Text="{Binding Title}" FontSize="24" HorizontalAlignment="Center"/>
         <StackPanel Orientation="Horizontal" Spacing="24" HorizontalAlignment="Center">
-            <Button Width="220" Height="140" Command="{Binding OptionACmd}" IsEnabled="{Binding IsCaptureAccessEnabled}">
+            <Button Background="Transparent" Width="220" Height="140" Command="{Binding OptionACmd}" IsEnabled="{Binding IsCaptureAccessEnabled}">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                    <Image Source="avares://Photobooth/Assets/classic.jpg"
-                           Width="96" Height="72" Stretch="UniformToFill"/>
-                    <TextBlock Text="Classique (1 photo)" HorizontalAlignment="Center"/>
+                    <Image Source="avares://Photobooth/Assets/icon_photo_simple_transparent.png"
+                           Width="150" Height="72" Stretch="UniformToFill"/>
                 </StackPanel>
             </Button>
             <Button Width="220" Height="140" Command="{Binding OptionBCmd}" IsEnabled="{Binding IsCaptureAccessEnabled}">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
-                    <Image Source="avares://Photobooth/Assets/strip.jpg"
-                           Width="96" Height="72" Stretch="UniformToFill"/>
-                    <TextBlock Text="Photostrip (4 photos)" HorizontalAlignment="Center"/>
+                    <Image Source="avares://Photobooth/Assets/icon_photo_grid_transparent.png"
+                           Width="150" Height="72" Stretch="UniformToFill"/>
                 </StackPanel>
             </Button>
         </StackPanel>
