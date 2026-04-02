@@ -24,6 +24,7 @@ public partial class App : Application
         ConfigLoader.Load();
         
         var sharedVideoCapture = new SharedVideoCapture(0, 1280, 720, 30);
+        var printQueueService = new PrintQueueService();
         try
         {
             sharedVideoCapture.WarmUp();
@@ -36,10 +37,14 @@ public partial class App : Application
         Func<IPreviewService> previewFactory = () => new LinuxOpenCvPreviewService(sharedVideoCapture, 0, 1280, 720, 30);
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
-            desktop.Exit += (_, _) => sharedVideoCapture.Dispose();
+            desktop.Exit += (_, _) =>
+            {
+                sharedVideoCapture.Dispose();
+                printQueueService.Dispose();
+            };
             desktop.MainWindow = new MainWindow
             {
-                DataContext = new MainWindowViewModel(previewFactory),
+                DataContext = new MainWindowViewModel(previewFactory, printQueueService),
             };
         }
 

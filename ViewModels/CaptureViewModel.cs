@@ -13,6 +13,7 @@ namespace Photobooth.ViewModels;
 public sealed class CaptureViewModel : ReactiveObject, IDisposable
 {
     private readonly IPreviewService  _previewService;
+    private readonly IPrintQueueService _printQueueService;
     private readonly Action _onExit;
     private readonly CancellationTokenSource _cts = new();
     public string Mode { get; }
@@ -59,9 +60,10 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
     public ReactiveCommand<Unit, Unit> RestartCmd { get; }
     public ReactiveCommand<Unit, Unit> PrintCmd { get; }
 
-    public CaptureViewModel(IPreviewService previewService, string mode, Action? onExit = null)
+    public CaptureViewModel(IPreviewService previewService, IPrintQueueService printQueueService, string mode, Action? onExit = null)
     {
         _previewService = previewService;
+        _printQueueService = printQueueService;
         Mode = mode;
         _onExit = onExit;
 
@@ -165,8 +167,14 @@ public sealed class CaptureViewModel : ReactiveObject, IDisposable
             outputFileName: $"photo_{DateTime.Now:yyyyMMdd_HHmmss}.jpg"
         );
         
-        Console.WriteLine($"Photo sauvé : {output}");
-        StopAndExit();
+        if (_printQueueService.TryEnqueue(output))
+        {
+            Console.WriteLine($"Photo ajoutée à la pile d'impression : {output}");
+            StopAndExit();
+            return;
+        }
+
+        Console.WriteLine("Pile d'impression pleine (max 2 tâches).");
     }
     
     public void Dispose()

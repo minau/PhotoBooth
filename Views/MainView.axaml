@@ -6,14 +6,14 @@
     <StackPanel Margin="24" Spacing="16" HorizontalAlignment="Center" VerticalAlignment="Center">
         <TextBlock Text="{Binding Title}" FontSize="24" HorizontalAlignment="Center"/>
         <StackPanel Orientation="Horizontal" Spacing="24" HorizontalAlignment="Center">
-            <Button Width="220" Height="140" Command="{Binding OptionACmd}">
+            <Button Width="220" Height="140" Command="{Binding OptionACmd}" IsEnabled="{Binding IsCaptureAccessEnabled}">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
                     <Image Source="avares://Photobooth/Assets/classic.jpg"
                            Width="96" Height="72" Stretch="UniformToFill"/>
                     <TextBlock Text="Classique (1 photo)" HorizontalAlignment="Center"/>
                 </StackPanel>
             </Button>
-            <Button Width="220" Height="140" Command="{Binding OptionBCmd}">
+            <Button Width="220" Height="140" Command="{Binding OptionBCmd}" IsEnabled="{Binding IsCaptureAccessEnabled}">
                 <StackPanel Orientation="Vertical" HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="8">
                     <Image Source="avares://Photobooth/Assets/strip.jpg"
                            Width="96" Height="72" Stretch="UniformToFill"/>
@@ -21,5 +21,8 @@
                 </StackPanel>
             </Button>
         </StackPanel>
+        <TextBlock Text="Impression en cours : retour capture temporairement bloqué."
+                   HorizontalAlignment="Center"
+                   IsVisible="{Binding IsPrintQueueBusy}"/>
     </StackPanel>
 </UserControl>
