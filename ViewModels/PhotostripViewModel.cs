@@ -10,7 +10,6 @@ using Avalonia.Threading;
 using Photobooth.Services;
 using Photobooth.Utils;
 using ReactiveUI;
-using SixLabors.ImageSharp.PixelFormats;
 
 namespace Photobooth.ViewModels;
 
@@ -64,6 +63,26 @@ public sealed class PhotostripViewModel : ReactiveObject, IDisposable
 
     private bool _isFrozen;
     public bool IsFrozen { get => _isFrozen; set => this.RaiseAndSetIfChanged(ref _isFrozen, value); }
+
+    private Bitmap? _finalPreview;
+    public Bitmap? FinalPreview
+    {
+        get => _finalPreview;
+        set => this.RaiseAndSetIfChanged(ref _finalPreview, value);
+    }
+
+    private bool _isFinalPreviewVisible;
+    public bool IsFinalPreviewVisible
+    {
+        get => _isFinalPreviewVisible;
+        set
+        {
+            this.RaiseAndSetIfChanged(ref _isFinalPreviewVisible, value);
+            this.RaisePropertyChanged(nameof(IsCameraPreviewVisible));
+        }
+    }
+
+    public bool IsCameraPreviewVisible => !IsFinalPreviewVisible;
     
     public ReactiveCommand<Unit, Unit> CancelCmd { get; }
     public ReactiveCommand<Unit, Unit> RestartCmd { get; }
@@ -99,22 +118,26 @@ public sealed class PhotostripViewModel : ReactiveObject, IDisposable
         Step = 1;
         await LaunchCounter(ct);
         var thumb1 = FreezeAndCapture();
-        Dispatcher.UIThread.Post(() => PhotostripFrame1 = thumb1);
+        await Dispatcher.UIThread.InvokeAsync(() => PhotostripFrame1 = thumb1);
         await RestartPreviewService(ct);
         Step = 2;
         await LaunchCounter(ct);
         var thumb2 = FreezeAndCapture();
-        Dispatcher.UIThread.Post(() => PhotostripFrame2 = thumb2);
+        await Dispatcher.UIThread.InvokeAsync(() => PhotostripFrame2 = thumb2);
         await RestartPreviewService(ct);
         Step = 3;
         await LaunchCounter(ct);
         var thumb3 = FreezeAndCapture();
-        Dispatcher.UIThread.Post(() => PhotostripFrame3 = thumb3);
+        await Dispatcher.UIThread.InvokeAsync(() => PhotostripFrame3 = thumb3);
         await RestartPreviewService(ct);
         Step = 4;
         await LaunchCounter(ct);
         var thumb4 = FreezeAndCapture();
-        Dispatcher.UIThread.Post(() => PhotostripFrame4 = thumb4);
+        await Dispatcher.UIThread.InvokeAsync(() =>
+        {
+            PhotostripFrame4 = thumb4;
+            BuildFinalPreview();
+        });
     }
 
     private async Task LaunchCounter(CancellationToken ct)
@@ -196,7 +219,22 @@ public sealed class PhotostripViewModel : ReactiveObject, IDisposable
         PhotostripFrame2 = null;
         PhotostripFrame3 = null;
         PhotostripFrame4 = null;
+        FinalPreview = null;
+        IsFinalPreviewVisible = false;
         _ = RunSequenceAsync(_cts.Token);
+    }
+
+    private void BuildFinalPreview()
+    {
+        if (PhotostripFrame1 is null || PhotostripFrame2 is null || PhotostripFrame3 is null || PhotostripFrame4 is null)
+            return;
+
+        var frames = new List<Bitmap>() { PhotostripFrame1, PhotostripFrame2, PhotostripFrame3, PhotostripFrame4 };
+        FinalPreview = TemplateRenderer.RenderToBitmap(
+            templatePath: TemplateRenderer.Grid,
+            photos: frames,
+            slots: TemplateRenderer.PhotoStripSlots);
+        IsFinalPreviewVisible = true;
     }
 
     private void Print()

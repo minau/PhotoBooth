@@ -12,7 +12,15 @@
                    Stretch="Uniform"
                    Height="520"
                    HorizontalAlignment="Center"
-                   VerticalAlignment="Center"/>
+                   VerticalAlignment="Center"
+                   IsVisible="{Binding IsCameraPreviewVisible}"/>
+
+            <Image Source="{Binding FinalPreview}"
+                   Stretch="Uniform"
+                   Height="520"
+                   HorizontalAlignment="Center"
+                   VerticalAlignment="Center"
+                   IsVisible="{Binding IsFinalPreviewVisible}"/>
 
             <Border Background="#66000000"
                     CornerRadius="8"
@@ -63,7 +71,8 @@
             </Button>
 
             <Button Classes="iconButton"
-                    Command="{Binding PrintCmd}">
+                    Command="{Binding PrintCmd}"
+                    IsEnabled="{Binding IsFinalPreviewVisible}">
                 <Image Width="42"
                        Height="42"
                        Source="avares://Photobooth/Assets/icon_print.png"/>
