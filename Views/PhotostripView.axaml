@@ -87,6 +87,7 @@
 
                     <Button Classes="iconButton"
                             Command="{Binding PrintCmd}"
+                            IsVisible="{Binding IsFinalPreviewVisible}"
                             IsEnabled="{Binding IsFinalPreviewVisible}">
                         <Image Width="42" Height="42"
                                Source="avares://Photobooth/Assets/icon_print.png"/>
